@@ -24,10 +24,10 @@ export class AuthController {
 
     const token = authHeader.replace('Bearer ', '');
     try {
-      const payload = this.authService.verifyToken(token); // decode JWT
+      const payload = this.authService.verifyToken(token); 
       return {
-        accessToken: token, // original token
-        payload,            // decoded payload
+        accessToken: token, 
+        payload,           
       };
     } catch {
       throw new UnauthorizedException('Invalid token');

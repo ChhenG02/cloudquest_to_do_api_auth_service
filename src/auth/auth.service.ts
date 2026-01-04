@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -11,6 +15,16 @@ export class AuthService {
   ) {}
 
   async signup(username: string, email: string, password: string) {
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      throw new BadRequestException('Email already exists');
+    }
+
+    const existingByUsername = await this.usersService.findByUsername(username);
+    if (existingByUsername) {
+      throw new BadRequestException('Username already taken');
+    }
+
     const hash = await bcrypt.hash(password, 10);
     return this.usersService.create({
       username,
@@ -21,10 +35,14 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
-    if (!user) throw new UnauthorizedException();
+    if (!user) {
+      throw new UnauthorizedException('Invalid Credientials');
+    }
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) throw new UnauthorizedException();
+    if (!valid) {
+      throw new UnauthorizedException('Invalid Credientials');
+    }
 
     const payload = { sub: user.id, email: user.email };
 
@@ -34,10 +52,9 @@ export class AuthService {
     };
   }
 
-  // verify a JWT and return payload
   verifyToken(token: string) {
     try {
-      return this.jwtService.verify(token); // decoded payload
+      return this.jwtService.verify(token);
     } catch (err) {
       throw new UnauthorizedException('Invalid token');
     }

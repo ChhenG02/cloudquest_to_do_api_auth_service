@@ -14,6 +14,11 @@ export class UsersService {
     return this.repo.findOne({ where: { email } });
   }
 
+   findByUsername(username: string) {
+    return this.repo.findOne({ where: { username } });
+  }
+
+
   create(user: Partial<User>) {
     return this.repo.save(user);
   }
