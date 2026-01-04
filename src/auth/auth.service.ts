@@ -26,22 +26,36 @@ export class AuthService {
     }
 
     const hash = await bcrypt.hash(password, 10);
-    return this.usersService.create({
+    const user = await this.usersService.create({
       username,
       email,
       password: hash,
     });
+
+    // Generate token for the new user (just like login)
+    const payload = { sub: user.id, email: user.email };
+    const accessToken = this.jwtService.sign(payload);
+
+    return {
+      accessToken,
+      payload,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
+    };
   }
 
   async login(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Invalid Credientials');
+      throw new UnauthorizedException('Invalid Credentials');
     }
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      throw new UnauthorizedException('Invalid Credientials');
+      throw new UnauthorizedException('Invalid Credentials');
     }
 
     const payload = { sub: user.id, email: user.email };
@@ -49,6 +63,11 @@ export class AuthService {
     return {
       accessToken: this.jwtService.sign(payload),
       payload,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
     };
   }
 
