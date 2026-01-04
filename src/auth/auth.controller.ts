@@ -8,7 +8,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
-  signup(@Body() dto: SignupDto) {
+  async signup(@Body() dto: SignupDto) {
     return this.authService.signup(dto.username, dto.email, dto.password);
   }
 
@@ -27,7 +27,11 @@ export class AuthController {
       const payload = this.authService.verifyToken(token); 
       return {
         accessToken: token, 
-        payload,           
+        payload,
+        user: {
+          id: payload.sub,
+          email: payload.email,
+        }
       };
     } catch {
       throw new UnauthorizedException('Invalid token');
