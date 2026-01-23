@@ -32,7 +32,6 @@ export class AuthService {
       password: hash,
     });
 
-    // Generate token for the new user (just like login)
     const payload = { sub: user.id, email: user.email };
     const accessToken = this.jwtService.sign(payload);
 
@@ -78,4 +77,40 @@ export class AuthService {
       throw new UnauthorizedException('Invalid token');
     }
   }
+
+  // ✅ NEW: Search users method
+  async searchUsers(query: string, currentUserId: string) {
+    if (!query || query.trim().length < 2) {
+      return [];
+    }
+
+    // Use the UsersService to search
+    const users = await this.usersService.searchUsers(query.trim());
+    
+    // Filter out current user and format response
+    return users
+      .filter(user => user.id !== currentUserId)
+      .map(user => ({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      }));
+  }
+  async getUsersByIds(ids: string[], currentUserId?: string) {
+  if (!ids || ids.length === 0) return [];
+
+  const uniqueIds = Array.from(new Set(ids));
+
+  // ✅ You need a UsersService method for this:
+  const users = await this.usersService.findByIds(uniqueIds);
+
+  return users
+    .filter(u => (currentUserId ? u.id !== currentUserId : true))
+    .map(u => ({
+      id: u.id,
+      email: u.email,
+      username: u.username,
+    }));
+}
+
 }

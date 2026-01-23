@@ -1,7 +1,9 @@
-import { Controller, Post, Body, Get, Request, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Request, UnauthorizedException, UseGuards, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from './jwt.guard';
+import { BatchUsersDto } from './dto/batch-users.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -36,5 +38,20 @@ export class AuthController {
     } catch {
       throw new UnauthorizedException('Invalid token');
     }
+  }
+
+    @Get('users/search')
+  @UseGuards(JwtAuthGuard) // Protect this endpoint
+  async searchUsers(@Query('q') query: string, @Request() req) {
+    // Pass the current user ID to exclude from results
+    const currentUserId = req.user?.sub || req.user?.id;
+    return this.authService.searchUsers(query, currentUserId);
+  }
+    @Post('users/batch')
+  @UseGuards(JwtAuthGuard)
+  async getUsersByIds(@Body() dto: BatchUsersDto, @Request() req) {
+    // optional: exclude current user from results
+    const currentUserId = req.user?.sub || req.user?.id;
+    return this.authService.getUsersByIds(dto.ids, currentUserId);
   }
 }
