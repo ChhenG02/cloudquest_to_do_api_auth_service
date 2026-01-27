@@ -1,23 +1,29 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { webcrypto } from 'crypto';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
 async function bootstrap() {
-  if (!globalThis.crypto) {
-    (globalThis as any).crypto = webcrypto;
-  }
-
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // ✅ Correct defaults for API Gateway
+  const PORT = Number(process.env.PORT) || 8000;
+  const CORS_ORIGIN =
+    process.env.CORS_ORIGIN || 'http://localhost:3000';
+
+  app.enableCors({
+    origin: CORS_ORIGIN.split(','), // supports multiple origins if needed
+    credentials: false, // ✅ IMPORTANT (Bearer token auth)
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
-  const PORT = process.env.PORT || '3001';
+  await app.listen(PORT, '0.0.0.0');
 
-  await app.listen(Number(PORT), '0.0.0.0');
-
-  console.log(`Auth Service running on port ${PORT}`);
+  console.log(`✅ API Gateway running on port ${PORT}`);
+  console.log(`✅ CORS enabled for: ${CORS_ORIGIN}`);
 }
 
 bootstrap();
