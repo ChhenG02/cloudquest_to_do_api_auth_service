@@ -2,8 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { webcrypto } from 'crypto';
 
 async function bootstrap() {
+    if (!globalThis.crypto) {
+    (globalThis as any).crypto = webcrypto;
+  }
+  
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // ✅ Correct defaults for API Gateway
